@@ -326,23 +326,55 @@
 
   function makeQrCanvas(text, size) {
     return new Promise((resolve, reject) => {
-      if (typeof QRCode === "undefined" || !QRCode.toCanvas) {
+      if (typeof QRCode === "undefined") {
         reject(new Error("QRCode library missing"));
         return;
       }
-      QRCode.toCanvas(
-        text,
-        {
+      try {
+        const holder = document.createElement("div");
+        holder.style.cssText = "position:fixed;left:-9999px;top:-9999px;";
+        document.body.appendChild(holder);
+        new QRCode(holder, {
+          text,
           width: size,
-          margin: 1,
-          color: { dark: "#14212b", light: "#ffffff" },
-          errorCorrectionLevel: "M",
-        },
-        (err, qrCanvas) => {
-          if (err) reject(err);
-          else resolve(qrCanvas);
+          height: size,
+          colorDark: "#14212b",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+        const src = holder.querySelector("canvas") || holder.querySelector("img");
+        const out = document.createElement("canvas");
+        out.width = size;
+        out.height = size;
+        const octx = out.getContext("2d");
+        const finish = () => {
+          holder.remove();
+          resolve(out);
+        };
+        if (src && src.tagName === "CANVAS") {
+          octx.drawImage(src, 0, 0, size, size);
+          finish();
+        } else if (src && src.tagName === "IMG") {
+          if (src.complete) {
+            octx.drawImage(src, 0, 0, size, size);
+            finish();
+          } else {
+            src.onload = () => {
+              octx.drawImage(src, 0, 0, size, size);
+              finish();
+            };
+            src.onerror = () => {
+              holder.remove();
+              reject(new Error("QR image failed"));
+            };
+          }
+        } else {
+          holder.remove();
+          reject(new Error("QR DOM empty"));
         }
-      );
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
