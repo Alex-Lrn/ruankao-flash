@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="description" content="软考题库：覆盖高级、中级、初级资格目录。先刷高级五科，不会优先再出，可导出今日战报。" />
+  <title>软考题库</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;600;700&family=Noto+Serif+SC:wght@500;600&family=Sora:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <strong id="brandTitle">软考题库</strong>
+        <span id="brandSub">先选等级，再选资格。高级五科可直接开刷。</span>
+      </div>
+      <div class="pill-row">
+        <span class="pill">无登录</span>
+        <span class="pill">本地存储</span>
+        <span class="pill">可导出战报</span>
+      </div>
+    </header>
+
+    <section class="view" id="homeView">
+      <div class="level-tabs" role="tablist" aria-label="资格等级">
+        <button type="button" data-level="高级" aria-selected="true">高级</button>
+        <button type="button" data-level="中级" aria-selected="false">中级</button>
+        <button type="button" data-level="初级" aria-selected="false">初级</button>
+      </div>
+      <div class="qual-grid" id="qualGrid"></div>
+      <p class="home-note">目录按 2026 年软考安排。信息系统项目管理师已按 2023 版考试大纲逐条覆盖。其余高级资格仍是起步题库。进度按资格分开保存。</p>
+    </section>
+
+    <section class="view" id="studyView" hidden>
+      <section class="panel">
+        <div class="stats">
+          <div class="stat"><b id="statKnown">0</b><small>累计掌握</small></div>
+          <div class="stat"><b id="statWeak">0</b><small>薄弱待补</small></div>
+          <div class="stat"><b id="statToday">0</b><small>今日复习</small></div>
+          <div class="stat"><b id="statStreak">0</b><small>连续打卡</small></div>
+        </div>
+        <div class="toolbar">
+          <button class="btn" id="btnBack" type="button">返回资格</button>
+          <select id="paperSelect" aria-label="选择科目">
+            <option value="全部">全部科目</option>
+            <option value="综合">综合知识</option>
+            <option value="案例">案例分析</option>
+            <option value="论文">论文</option>
+          </select>
+          <select id="chapterSelect" aria-label="选择章节"></select>
+          <button class="btn btn-primary" id="btnShuffle" type="button">再来一轮</button>
+          <button class="btn btn-warn" id="btnReport" type="button">导出今日战报</button>
+          <button class="btn btn-ghost" id="btnReset" type="button">清空本资格进度</button>
+          <span class="pill">本轮剩余 <b id="statRemain">0</b></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="card-stage">
+          <article class="flash" id="flash">
+            <div class="flash-meta">
+              <span class="tag" id="cardTag">综合</span>
+              <span id="cardProgress">1 / 1</span>
+            </div>
+            <p class="prompt" id="cardPrompt">加载中…</p>
+            <p class="hint" id="cardHint">先写下答案，再对照参考答案</p>
+            <div id="revealBlock" hidden>
+              <p class="field-label">你的作答</p>
+              <p class="answer mine" id="userEcho"></p>
+              <p class="field-label">参考答案</p>
+              <p class="answer" id="cardAnswer"></p>
+            </div>
+          </article>
+        </div>
+        <label class="composer" id="composer">
+          <span>你的答案</span>
+          <textarea id="userAnswer" rows="4" placeholder="用自己的话写出要点，不必与参考答案逐字相同"></textarea>
+        </label>
+        <div class="actions">
+          <button class="btn" id="btnFlip" type="button" disabled>对照答案</button>
+          <button class="btn btn-ghost" id="btnSkip" type="button">不会写，直接看</button>
+          <button class="btn btn-danger" id="btnWeak" type="button" disabled>不会</button>
+          <button class="btn btn-ok" id="btnKnow" type="button" disabled>会了</button>
+        </div>
+      </section>
+    </section>
+
+    <p class="foot">
+      先写下答案再对照 · 不会的卡片会提高再次抽中概率 · 进度只保存在本机浏览器<br />
+      面向码上创「考试」场景 · 可分享战报到朋友圈 / 小红书 / CSDN
+    </p>
+  </div>
+
+  <div class="modal-backdrop" id="reportModal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reportTitle">
+      <h2 id="reportTitle">今日战报</h2>
+      <canvas id="reportCanvas" width="720" height="960"></canvas>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btnSaveReport" type="button">保存图片</button>
+        <button class="btn" id="btnCloseReport" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/catalog.js"></script>
+  <script src="./js/banks/pm.js"></script>
+  <script src="./js/banks/sa.js"></script>
+  <script src="./js/banks/architect.js"></script>
+  <script src="./js/banks/network-planner.js"></script>
+  <script src="./js/banks/itss.js"></script>
+  <script src="./js/banks/designer.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
